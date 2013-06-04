@@ -17,10 +17,12 @@
                  }
 , "main": "./lib/rpc_actuator.js"
 , "dependencies":
-  { 
-    "serialport": "x.x.x"
+  {}
+, "devDependencies":
+  {
+    "webinos-jsonrpc2": "*" 
   }
-, "bundleDependencies":
+,"bundleDependencies":
   [
   ]
 }
