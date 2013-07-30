@@ -17,6 +17,7 @@
 ******************************************************************************/
 (function() {
 
+	var actuatorListeners = new Array();
 	
 	
 	/**
@@ -63,18 +64,35 @@
 	 * @param params Parameters for starting the application.
 	 */
 	ActuatorModule.prototype.setValue = function (value, successCB, errorCallback){
-		//returns pendingOp
-		
-		var rpc = webinos.rpcHandler.createRPC(this, "setValue", value);
-		webinos.rpcHandler.executeRPC(rpc,
-				function (event){
-					successCB(event);
-				},
-				function (domerror){
-					errorCallback(domerror);
-				}
-		);
-
+		var rpc = webinos.rpcHandler.createRPC(this, "setValue", value);		
+		rpc.onEvent = function (actuatorEvent) {
+        	successCB(actuatorEvent);
+    	};
+    	webinos.rpcHandler.registerCallbackObject(rpc);
+    	webinos.rpcHandler.executeRPC(rpc);        
 	};
-    	
+    
+    ActuatorModule.prototype.addEventListener = function(eventType, eventHandler, capture) {
+        var rpc = webinos.rpcHandler.createRPC(this, "addEventListener", eventType);
+        actuatorListeners.push([rpc.id, eventHandler, this.id]);
+        rpc.onEvent = function (actuatorEvent) {
+            eventHandler(actuatorEvent);
+        };
+        webinos.rpcHandler.registerCallbackObject(rpc);
+        webinos.rpcHandler.executeRPC(rpc);
+    };
+
+    ActuatorModule.prototype.removeEventListener = function(eventType, eventHandler, capture) {
+        for (var i = 0; i < actuatorListeners.length; i++) {
+            if (actuatorListeners[i][1] == eventHandler && actuatorListeners[i][2] == this.id) {
+                var arguments = new Array();
+                arguments[0] = actuatorListeners[i][0];
+                arguments[1] = eventType;
+                var rpc = webinos.rpcHandler.createRPC(this, "removeEventListener", arguments);
+                webinos.rpcHandler.executeRPC(rpc);
+                actuatorListeners.splice(i,1);
+                break;
+            }
+        }
+    };
 }());
